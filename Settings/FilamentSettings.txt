@@ -1,0 +1,113 @@
+# ==============================================================================
+#                            FILAMENT SETTINGS
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+#                              FILAMENT TAB
+# ------------------------------------------------------------------------------
+
+## Basic Information
+- Type: PLA
+- Vendor: Generic
+- Default color: White
+- Diameter: 1.75 mm
+- Flow ratio: 0.98
+- Density: 1.24 g/cm³
+- Shrinkage: 100%
+- Velocity Adaptation Factor: 1
+- Price: 20 money/kg
+- Softening temperature: 45°C
+
+## Filament Prime & Ramming
+- Filament prime volume (Filament change): 45 mm³
+- Filament prime volume (Hotend change): 60 mm³
+- Filament ramming length (Extruder change): 10 mm
+- Filament ramming length (Hotend change): 10 mm
+- Travel time after ramming (Extruder change): 0 s
+- Travel time after ramming (Hotend change): 0 s
+- Precooling target temperature (Extruder change): 0°C
+- Precooling target temperature (Hotend change): 0°C
+
+## Recommended Nozzle Temperature
+- Min: 215°C
+- Max: 220°C
+
+## Print Temperature
+
+### Cool Plate SuperTack
+- Initial layer: 45°C
+- Other layers: 45°C
+
+### Cool Plate
+- Initial layer: 35°C
+- Other layers: 35°C
+
+### Engineering Plate
+- Initial layer: 0°C
+- Other layers: 0°C
+
+### Smooth PEI Plate / High Temp Plate
+- Initial layer: 65°C
+- Other layers: 65°C
+
+### Textured PEI Plate
+- Initial layer: 65°C
+- Other layers: 60°C
+
+### Nozzle
+- Initial layer: 220°C
+- Other layers: 215°C
+
+## Volumetric Speed Limitation
+- Adaptive volumetric speed: Disabled
+- Max volumetric speed: 12 mm³/s
+- Ramming volumetric speed (Extruder change): -1 mm³/s
+- Ramming volumetric speed (Hotend change): -1 mm³/s
+
+# ------------------------------------------------------------------------------
+#                           SETTING OVERRIDES TAB
+# ------------------------------------------------------------------------------
+
+## Retraction
+- Retraction length: N/A
+- Z hop when retract: Enabled
+- Z hop height: 0.4 mm
+- Z Hop Type: (not set)
+- Retraction speed: 40 mm/s
+- Deretraction speed: N/A
+- Extra length on restart: N/A
+- Travel distance threshold: N/A
+- Retract when change layer: Disabled
+- Wipe while retracting: Enabled
+- Wipe distance: N/A
+- Retract amount before wipe: N/A
+- Long retraction when cut (experimental): Disabled
+
+# ------------------------------------------------------------------------------
+#                               COOLING TAB
+# ------------------------------------------------------------------------------
+
+## Cooling for Specific Layer
+- Special cooling settings:
+  - For the first: 1 layer
+  - Fan speed: 0%
+
+## Part Cooling Fan
+- Min fan speed threshold:
+  - Fan speed: 100%
+  - Layer time: 80 s
+- Max fan speed threshold:
+  - Fan speed: 100%
+  - Layer time: 8 s
+- Keep fan always on: Enabled
+- Slow printing down for better layer cooling: Enabled
+- Don't slow down outer walls: Disabled
+- Min print speed: 20 mm/s
+- Force cooling for overhangs and bridges: Enabled
+- Cooling overhang threshold: 50%
+- Overhang threshold for participating cooling: 100%
+- Fan speed for overhangs: 100%
+- Pre start fan time: 0 s
+
+## Auxiliary Part Cooling Fan
+- Fan speed: 70%

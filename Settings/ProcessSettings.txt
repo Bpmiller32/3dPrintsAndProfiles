@@ -1,0 +1,225 @@
+# ==============================================================================
+#                            PROCESS SETTINGS
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+#                                  Quality
+# ------------------------------------------------------------------------------
+
+## Layer Height
+- Layer height
+- Initial layer height
+
+## Line Width
+- Default
+- Initial layer
+- Outer wall
+- Inner wall
+- Top surface
+- Sparse infill
+- Internal solid infill
+- Support
+
+## Seam
+- Seam position
+- Seam placement away from overhangs (experimental)
+- Smart scarf seam application
+- Scarf application angle threshold
+- Scarf around entire wall
+- Scarf steps
+- Scarf joint for inner walls
+- Override filament scarf seam setting
+- Role-based wipe speed
+
+## Precision
+- Slice gap closing radius
+- Resolution
+- Arc fitting
+- X-Y hole compensation
+- X-Y contour compensation
+- Auto circle contour-hole compensation
+- Elephant foot compensation
+- Precise Z height
+
+## Ironing
+- Ironing type
+
+## Wall Generator
+- Wall generator
+
+## Advanced
+- Order of walls
+- Print infill first
+- Bridge flow
+- Thick bridges
+- Only one wall on top surfaces
+- Only one wall on first layer
+- Smooth speed discontinuity area
+- Smooth coefficient
+- Avoid crossing wall
+- Smoothing wall speed along Z (experimental)
+
+# ------------------------------------------------------------------------------
+#                                  Strength
+# ------------------------------------------------------------------------------
+
+## Walls
+- Wall loops
+- Embedding the wall into the infill
+- Detect thin wall
+
+## Top/Bottom Shells
+- Top surface pattern
+- Top shell layers
+- Top shell thickness
+- Top paint penetration layers
+- Bottom surface pattern
+- Bottom shell layers
+- Bottom shell thickness
+- Bottom paint penetration layers
+- Internal solid infill pattern
+
+## Sparse Infill
+- Sparse infill density
+- Fill multiline
+- Sparse infill pattern
+- Length of sparse infill anchor
+- Maximum length of sparse infill anchor
+
+## Advanced
+- Infill/wall overlap
+- Infill direction
+- Bridge direction
+- Minimum sparse infill threshold
+- Infill combination
+- Detect narrow internal solid infill
+- Ensure vertical shell thickness
+- Detect floating vertical shells
+
+# ------------------------------------------------------------------------------
+#                                   Speed
+# ------------------------------------------------------------------------------
+
+## Initial Layer Speed
+- Initial layer
+- Initial layer infill
+
+## Other Layers Speed
+- Outer wall
+- Inner wall
+- Small perimeters
+- Small perimeter threshold
+- Sparse infill
+- Internal solid infill
+- Vertical shell speed
+- Top surface
+- Slow down for overhangs
+- Overhang speed (10%)
+- Overhang speed (25%)
+- Overhang speed (50%)
+- Overhang speed (75%)
+- Overhang speed (100%)
+- Slow down by height
+- Bridge
+- Gap infill
+- Support
+- Support interface
+
+## Travel Speed
+- Travel
+
+## Acceleration
+- Normal printing
+- Travel
+- Initial layer travel
+- Initial layer
+- Outer wall
+- Inner wall
+- Top surface
+- Sparse infill
+
+# ------------------------------------------------------------------------------
+#                                  Support
+# ------------------------------------------------------------------------------
+
+- Enable support
+- Type
+- Style
+- Threshold angle
+- On build plate only
+- Remove small overhangs
+
+## Raft
+- Raft layers
+
+## Filament for Supports
+- Support/raft base
+- Support/raft interface
+
+## Advanced
+- Initial layer density
+- Initial layer expansion
+- Support wall loops
+- Top z distance
+- Bottom z distance
+- Base pattern
+- Base pattern spacing
+- Pattern angle
+- Top interface layers
+- Bottom interface layers
+- Interface pattern
+- Top interface spacing
+- Normal support expansion
+- Support/object xy distance
+- Z overrides x/y
+- Support/object first layer gap
+- Don't support bridges
+- Independent support layer height
+
+# ------------------------------------------------------------------------------
+#                                   Others
+# ------------------------------------------------------------------------------
+
+## Bed Adhesion
+- Skirt loops
+- Skirt height
+- Brim type
+- Brim width
+- Brim-object gap
+
+## Prime Tower
+- Enable
+- Skip points
+- Internal ribs
+- Width
+- Max speed
+- Brim width
+- Infill gap
+- Rib wall
+- Extra rib length
+- Rib width
+- Fillet wall
+
+## Flush Options
+- Flush into objects' infill
+- Flush into objects' support
+
+## Special Mode
+- Slicing mode
+- Print sequence
+- Spiral vase
+- Timelapse
+- Fuzzy skin
+- Fuzzy skin point distance
+- Fuzzy skin thickness
+
+## Advanced
+- Use beam interlocking
+- Interlocking depth of a segmented region
+
+## G-code Output
+- Reduce infill retraction
+
+## Post Processing Scripts
+
+## Notes
