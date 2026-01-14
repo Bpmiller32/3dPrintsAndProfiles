@@ -1,0 +1,22 @@
+;===== Template Custom G-code =========================
+;===== Optimal settings for quality-focused printing ===
+; This file is INTENTIONALLY EMPTY - this is CORRECT!
+;
+; Use this file ONLY if you need custom G-code templates
+; for specific advanced scenarios:
+; - Custom material requirements not covered by main G-code
+; - Experimental features or testing
+; - Advanced printer modifications
+;
+; For NORMAL quality printing: Leave this EMPTY
+; All your standard quality settings are handled by:
+; - machineStartGCode.txt (with Z-offset fix)
+; - machineEndGCode.txt (with reset)
+; - pauseGCode.txt (preserves state)
+; - layerChangeGCode.txt (tracks progress)
+; - timelapseGCode.txt (captures frames)
+; - changeFilamentGCode.txt (AMS changes)
+;
+; Your settings are NOW OPTIMIZED for quality!
+; No custom templates needed for your use case.
+;===========================================================

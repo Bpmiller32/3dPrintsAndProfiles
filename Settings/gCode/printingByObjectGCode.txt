@@ -1,0 +1,18 @@
+;===== Printing By Object G-code =======================
+;===== Optimal settings for quality-focused printing ===
+; This file is INTENTIONALLY EMPTY - this is CORRECT!
+;
+; "By Object" printing mode is NOT recommended for quality:
+; - Prints one complete object before moving to next
+; - Requires careful planning to avoid nozzle collisions
+; - Limited part arrangement options
+; - Not ideal for most quality-focused workflows
+;
+; RECOMMENDED: Use standard "By Layer" print sequence instead
+; - Better for quality (consistent layer cooling)
+; - More reliable (less collision risk)  
+; - Easier to arrange parts on build plate
+; - Works with all your filament types
+;
+; Leave this file EMPTY unless you specifically need by-object mode
+;===========================================================

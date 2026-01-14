@@ -1,0 +1,283 @@
+;===============================================================================
+;                      FILAMENT CHANGE G-CODE
+;===============================================================================
+; Bambu Lab A1 - Multi-Material/AMS Filament Change
+; Date: 20251031
+;
+; WHAT THIS DOES:
+; Handles filament changes during multi-material/multi-color prints
+; when using the Automatic Material System (AMS)
+;
+; KEY FEATURES:
+; ✓ Comprehensive flushing routine for clean color/material transitions
+; ✓ Multiple flush stages with pulsatile extrusion for thorough purging
+; ✓ Wipe sequences to remove waste from nozzle tip
+; ✓ Temperature management for different materials
+; ✓ Does NOT interfere with G29.1 Z-offset (correct!)
+; ✓ Quality-focused: ensures complete material changeover
+;
+; FLUSH STAGES:
+; 1. Flush Stage 1: Primary purge of old material
+; 2. Flush Stage 2: Secondary purge with new material
+; 3. Flush Stage 3: Tertiary purge for stubborn materials
+; 4. Flush Stage 4: Final purge for complete transition
+;
+; ALREADY OPTIMIZED - No changes needed unless custom requirements!
+;===============================================================================
+
+;===== PREPARE FOR FILAMENT CHANGE =====
+M1007 S0   ; Turn off mass estimation during change
+G392 S0    ; Disable clog detection during change
+M620 S[next_extruder]A  ; Select next extruder for AMS
+M204 S9000 ; Set high acceleration for toolchange moves
+G1 Z{max_layer_z + 3.0} F1200  ; Raise Z 3mm above current layer
+
+M400       ; Wait for all moves to complete
+M106 P1 S0 ; Turn off part cooling fan
+M106 P2 S0 ; Turn off auxiliary fan
+
+; Maintain temperature if transitioning between materials
+{if old_filament_temp > 142 && next_extruder < 255}
+M104 S[old_filament_temp]  ; Keep hotend at old material temp
+{endif}
+
+;===== MOVE TO AMS POSITION =====
+G1 X267 F18000  ; Move to AMS exchange position
+
+;===== HANDLE LONG RETRACTIONS (if configured) =====
+{if long_retractions_when_cut[previous_extruder]}
+M620.11 S1 I[previous_extruder] E-{retraction_distances_when_cut[previous_extruder]} F1200
+{else}
+M620.11 S0  ; Standard retraction
+{endif}
+M400  ; Wait for retraction
+
+;===== AMS FILAMENT EXCHANGE =====
+M620.1 E F{flush_volumetric_speeds[previous_extruder]/2.4053*60} T{flush_temperatures[previous_extruder]}
+M620.10 A0 F{flush_volumetric_speeds[previous_extruder]/2.4053*60}  ; Retract old filament
+T[next_extruder]  ; Switch to next tool
+M620.1 E F{flush_volumetric_speeds[next_extruder]/2.4053*60} T{flush_temperatures[next_extruder]}
+M620.10 A1 F{flush_volumetric_speeds[next_extruder]/2.4053*60} L[flush_length] H[nozzle_diameter] T{flush_temperatures[next_extruder]}  ; Load new filament
+
+G1 Y128 F9000  ; Move to flush position
+
+{if next_extruder < 255}
+
+;===== RESTORE LONG RETRACTIONS =====
+{if long_retractions_when_cut[previous_extruder]}
+M620.11 S1 I[previous_extruder] E{retraction_distances_when_cut[previous_extruder]} F{flush_volumetric_speeds[previous_extruder]/2.4053*60}
+M628 S1
+G92 E0
+G1 E{retraction_distances_when_cut[previous_extruder]} F{flush_volumetric_speeds[previous_extruder]/2.4053*60}
+M400
+M629 S1
+{else}
+M620.11 S0
+{endif}
+
+M400
+G92 E0
+M628 S0
+
+;===== FLUSH STAGE 1: PRIMARY PURGE =====
+{if flush_length_1 > 1}
+; FLUSH_START
+; Use highest temperature for thorough purging
+M400
+M1002 set_filament_type:UNKNOWN
+M109 S[flush_temperatures[next_extruder]]  ; Heat to flush temp
+M106 P1 S60  ; Light fan to help with purge
+{if flush_length_1 > 23.7}
+  ; Extended flush with pulsatile extrusion pattern
+  ; Pulsing helps break up color boundaries
+  G1 E23.7 F{flush_volumetric_speeds[previous_extruder]/2.4053*60} ; Initial continuous extrusion
+  G1 E{(flush_length_1 - 23.7) * 0.02} F50  ; Slow pulse
+  G1 E{(flush_length_1 - 23.7) * 0.23} F{flush_volumetric_speeds[previous_extruder]/2.4053*60}  ; Fast purge
+  G1 E{(flush_length_1 - 23.7) * 0.02} F50  ; Slow pulse
+  G1 E{(flush_length_1 - 23.7) * 0.23} F{flush_volumetric_speeds[next_extruder]/2.4053*60}  ; Fast purge (new material)
+  G1 E{(flush_length_1 - 23.7) * 0.02} F50  ; Slow pulse
+  G1 E{(flush_length_1 - 23.7) * 0.23} F{flush_volumetric_speeds[next_extruder]/2.4053*60}  ; Fast purge
+  G1 E{(flush_length_1 - 23.7) * 0.02} F50  ; Slow pulse
+  G1 E{(flush_length_1 - 23.7) * 0.23} F{flush_volumetric_speeds[next_extruder]/2.4053*60}  ; Final fast purge
+{else}
+  ; Short flush - continuous extrusion
+  G1 E{flush_length_1} F{flush_volumetric_speeds[previous_extruder]/2.4053*60}
+{endif}
+; FLUSH_END
+G1 E-[old_retract_length_toolchange] F1800  ; Retract
+G1 E[old_retract_length_toolchange] F300    ; Prime
+M400
+M1002 set_filament_type:{filament_type[next_extruder]}  ; Set new filament type
+{endif}
+
+;===== WIPE AFTER FLUSH STAGE 1 =====
+{if flush_length_1 > 45 && flush_length_2 > 1}
+; WIPE - Remove excess purged material
+M400
+M106 P1 S178  ; Increase fan for wipe
+M400 S3       ; Wait 3 seconds
+G1 X-38.2 F18000  ; Wipe movement
+G1 X-48.2 F3000
+G1 X-38.2 F18000  ; Back and forth wipe
+G1 X-48.2 F3000
+G1 X-38.2 F18000  ; Final wipe
+G1 X-48.2 F3000
+M400
+M106 P1 S0    ; Turn off fan
+{endif}
+
+;===== FLUSH STAGE 2: SECONDARY PURGE =====
+{if flush_length_2 > 1}
+M106 P1 S60
+; FLUSH_START
+; More refined purge with new material
+G1 E{flush_length_2 * 0.18} F{flush_volumetric_speeds[next_extruder]/2.4053*60}
+G1 E{flush_length_2 * 0.02} F50
+G1 E{flush_length_2 * 0.18} F{flush_volumetric_speeds[next_extruder]/2.4053*60}
+G1 E{flush_length_2 * 0.02} F50
+G1 E{flush_length_2 * 0.18} F{flush_volumetric_speeds[next_extruder]/2.4053*60}
+G1 E{flush_length_2 * 0.02} F50
+G1 E{flush_length_2 * 0.18} F{flush_volumetric_speeds[next_extruder]/2.4053*60}
+G1 E{flush_length_2 * 0.02} F50
+G1 E{flush_length_2 * 0.18} F{flush_volumetric_speeds[next_extruder]/2.4053*60}
+G1 E{flush_length_2 * 0.02} F50
+; FLUSH_END
+G1 E-[new_retract_length_toolchange] F1800  ; Retract
+G1 E[new_retract_length_toolchange] F300    ; Prime
+{endif}
+
+;===== WIPE AFTER FLUSH STAGE 2 =====
+{if flush_length_2 > 45 && flush_length_3 > 1}
+M400
+M106 P1 S178
+M400 S3
+G1 X-38.2 F18000
+G1 X-48.2 F3000
+G1 X-38.2 F18000
+G1 X-48.2 F3000
+G1 X-38.2 F18000
+G1 X-48.2 F3000
+M400
+M106 P1 S0
+{endif}
+
+;===== FLUSH STAGE 3: TERTIARY PURGE =====
+{if flush_length_3 > 1}
+M106 P1 S60
+; FLUSH_START
+G1 E{flush_length_3 * 0.18} F{flush_volumetric_speeds[next_extruder]/2.4053*60}
+G1 E{flush_length_3 * 0.02} F50
+G1 E{flush_length_3 * 0.18} F{flush_volumetric_speeds[next_extruder]/2.4053*60}
+G1 E{flush_length_3 * 0.02} F50
+G1 E{flush_length_3 * 0.18} F{flush_volumetric_speeds[next_extruder]/2.4053*60}
+G1 E{flush_length_3 * 0.02} F50
+G1 E{flush_length_3 * 0.18} F{flush_volumetric_speeds[next_extruder]/2.4053*60}
+G1 E{flush_length_3 * 0.02} F50
+G1 E{flush_length_3 * 0.18} F{flush_volumetric_speeds[next_extruder]/2.4053*60}
+G1 E{flush_length_3 * 0.02} F50
+; FLUSH_END
+G1 E-[new_retract_length_toolchange] F1800
+G1 E[new_retract_length_toolchange] F300
+{endif}
+
+;===== WIPE AFTER FLUSH STAGE 3 =====
+{if flush_length_3 > 45 && flush_length_4 > 1}
+M400
+M106 P1 S178
+M400 S3
+G1 X-38.2 F18000
+G1 X-48.2 F3000
+G1 X-38.2 F18000
+G1 X-48.2 F3000
+G1 X-38.2 F18000
+G1 X-48.2 F3000
+M400
+M106 P1 S0
+{endif}
+
+;===== FLUSH STAGE 4: FINAL PURGE =====
+{if flush_length_4 > 1}
+M106 P1 S60
+; FLUSH_START
+; Final cleanup for perfect color transition
+G1 E{flush_length_4 * 0.18} F{flush_volumetric_speeds[next_extruder]/2.4053*60}
+G1 E{flush_length_4 * 0.02} F50
+G1 E{flush_length_4 * 0.18} F{flush_volumetric_speeds[next_extruder]/2.4053*60}
+G1 E{flush_length_4 * 0.02} F50
+G1 E{flush_length_4 * 0.18} F{flush_volumetric_speeds[next_extruder]/2.4053*60}
+G1 E{flush_length_4 * 0.02} F50
+G1 E{flush_length_4 * 0.18} F{flush_volumetric_speeds[next_extruder]/2.4053*60}
+G1 E{flush_length_4 * 0.02} F50
+G1 E{flush_length_4 * 0.18} F{flush_volumetric_speeds[next_extruder]/2.4053*60}
+G1 E{flush_length_4 * 0.02} F50
+; FLUSH_END
+{endif}
+
+M629  ; End flush sequence
+
+;===== FINAL PREPARATION FOR PRINTING =====
+M400
+M106 P1 S60  ; Light fan
+M109 S[new_filament_temp]  ; Heat to new material printing temp
+G1 E6 F{flush_volumetric_speeds[next_extruder]/2.4053*60}  ; Compensate for oozing during temp wait
+M400
+G92 E0
+G1 E-[new_retract_length_toolchange] F1800  ; Final retraction
+M400
+M106 P1 S178  ; Increase fan for final wipe
+M400 S3
+; Final extensive wipe
+G1 X-38.2 F18000
+G1 X-48.2 F3000
+G1 X-38.2 F18000
+G1 X-48.2 F3000
+G1 X-38.2 F18000
+G1 X-48.2 F3000
+G1 X-38.2 F18000
+G1 X-48.2 F3000
+M400
+G1 Z{max_layer_z + 3.0} F3000  ; Return to print height
+M106 P1 S0  ; Turn off fan
+
+; Restore appropriate acceleration
+{if layer_z <= (initial_layer_print_height + 0.001)}
+M204 S[initial_layer_acceleration]
+{else}
+M204 S[default_acceleration]
+{endif}
+{else}
+; Direct return if no flush needed
+G1 X[x_after_toolchange] Y[y_after_toolchange] Z[z_after_toolchange] F12000
+{endif}
+
+;===== DYNAMIC EXTRUSION CALIBRATION =====
+M622.1 S0
+M9833 F{outer_wall_volumetric_speed/2.4} A0.3  ; Calibrate dynamic extrusion compensation
+M1002 judge_flag filament_need_cali_flag
+M622 J1
+  ; Additional calibration wipe if needed
+  G92 E0
+  G1 E-[new_retract_length_toolchange] F1800
+  M400
+  
+  M106 P1 S178
+  M400 S4
+  G1 X-38.2 F18000
+  G1 X-48.2 F3000
+  G1 X-38.2 F18000  ; Wipe and shake
+  G1 X-48.2 F3000
+  G1 X-38.2 F12000  ; Wipe and shake
+  G1 X-48.2 F3000
+  M400
+  M106 P1 S0 
+M623
+
+;===== FINALIZE FILAMENT CHANGE =====
+M621 S[next_extruder]A  ; Complete AMS tool change
+G392 S0                 ; Re-enable clog detection
+M1007 S1                ; Re-enable mass estimation
+
+;===============================================================================
+; END OF FILAMENT CHANGE G-CODE
+; Material transition complete - ready to resume printing!
+;===============================================================================

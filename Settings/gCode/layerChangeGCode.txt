@@ -1,0 +1,10 @@
+;===== Layer Change G-code =============================
+;===== Optimal settings for quality-focused printing ===
+; layer num/total_layer_count: {layer_num+1}/[total_layer_count]
+M73 L{layer_num+1}  ; Update layer progress for display
+M991 S0 P{layer_num}  ; Layer tracking for printer
+
+; This code runs at EVERY layer change
+; Keeps track of progress for display and printer functions
+; No modifications needed - optimized for reliability
+;===========================================================

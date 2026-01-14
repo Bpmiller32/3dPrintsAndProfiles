@@ -1,0 +1,185 @@
+;===============================================================================
+;                         MACHINE END G-CODE
+;===============================================================================
+; Bambu Lab A1 - Optimized for PA6-CF Quality Printing
+; Date: 20231229 (Updated with safety fixes)
+;
+; CRITICAL FIXES APPLIED:
+; ✓ Safe Z clearance (10mm immediately before XY movement)
+; ✓ No nozzle collision with finished print
+; ✓ Proper shutdown sequence for reliability
+;
+; EXECUTION ORDER:
+; 1. Stop clog detection and retract filament
+; 2. RAISE Z IMMEDIATELY (prevents collision!)
+; 3. Move XY to safe position
+; 4. Capture timelapse frames (if enabled)
+; 5. Shutdown heaters and fans
+; 6. Retract filament to AMS (if using AMS)
+; 7. Final Z positioning and park
+; 8. Play completion sound
+; 9. Disable motors
+;===============================================================================
+
+;===== STEP 1: PREPARE FOR END SEQUENCE =====
+G392 S0        ; Turn off nozzle clog detection
+M400           ; Wait for all moves to complete
+G92 E0         ; Zero the extruder position
+G1 E-0.8 F1800 ; Retract 0.8mm to prevent oozing
+
+;===== STEP 2: SAFE Z CLEARANCE (CRITICAL!) =====
+; This MUST happen before ANY XY movement to prevent collision
+G91            ; Switch to relative positioning
+G1 Z10 F900    ; Raise Z by 10mm RIGHT NOW (safe clearance above print)
+G90            ; Back to absolute positioning
+
+;===== STEP 3: MOVE XY TO SAFE POSITION =====
+; Now that Z is raised, safe to move XY
+G1 X0 Y{first_layer_center_no_wipe_tower[1]} F18000  ; Move to safe X/Y position
+G1 X-13.0 F3000                                       ; Final positioning
+
+;===== STEP 4: TIMELAPSE CAPTURE (IF ENABLED) =====
+{if !spiral_mode && print_sequence != "by object"}
+M1002 judge_flag timelapse_record_flag
+M622 J1
+  ; Capture 28 timelapse frames with M971 commands
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M400 P100
+  M971 S11 C11 O0
+  M991 S0 P-1  ; End timelapse recording
+M623
+{endif}
+
+;===== STEP 5: SHUT DOWN HEATERS AND FANS =====
+M140 S0    ; Turn off heated bed
+M106 S0    ; Turn off part cooling fan
+M106 P2 S0 ; Turn off auxiliary cooling fan
+M106 P3 S0 ; Turn off chamber fan
+
+;===== STEP 6: AMS FILAMENT RETRACTION =====
+; If using AMS, retract filament back to unit
+M620 S255              ; Start AMS retraction sequence
+G1 X267 F15000         ; Move to AMS position
+T255                   ; Deselect current tool
+G1 X-28.5 F18000       ; Retraction movement
+G1 X-48.2 F3000        ; Slow retraction
+G1 X-28.5 F18000       ; Shake movement
+G1 X-48.2 F3000        ; Final retraction
+M621 S255              ; End AMS retraction sequence
+
+M104 S0    ; Turn off hotend heater
+
+;===== STEP 7: FINAL Z POSITIONING =====
+M400       ; Wait for all moves to complete
+M17 S      ; Set stepper hold
+M17 Z0.4   ; Lower Z motor current to reduce impact noise
+
+; Move Z to maximum safe height based on print height
+{if (max_layer_z + 100.0) < 256}
+  G1 Z{max_layer_z + 100.0} F600  ; Raise to print height + 100mm
+  G1 Z{max_layer_z + 98.0}        ; Back down 2mm (reduces strain)
+{else}
+  G1 Z256 F600  ; Max out at printer Z limit
+  G1 Z254       ; Back down 2mm
+{endif}
+
+M400 P100  ; Wait 100ms
+M17 R      ; Restore normal Z motor current
+
+;===== STEP 8: PARK AT HOME POSITION =====
+G90                  ; Absolute positioning
+G1 X-48 Y180 F3600   ; Move to home/park position (left-rear)
+
+; Reset all speed/accel magnitude adjustments
+M220 S100   ; Reset feedrate to 100%
+M201.2 K1.0 ; Reset acceleration magnitude
+M73.2 R1.0  ; Reset time remaining magnitude
+M1002 set_gcode_claim_speed_level : 0  ; Reset speed level
+
+;===== STEP 9: COMPLETION SOUND =====
+; Play pleasant melody to indicate successful print completion
+M17        ; Enable motors for sound generation
+M400 S1    ; Wait 1 second
+M1006 S1   ; Start sound sequence
+M1006 A0 B20 L100 C37 D20 M40 E42 F20 N60
+M1006 A0 B10 L100 C44 D10 M60 E44 F10 N60
+M1006 A0 B10 L100 C46 D10 M80 E46 F10 N80
+M1006 A44 B20 L100 C39 D20 M60 E48 F20 N60
+M1006 A0 B10 L100 C44 D10 M60 E44 F10 N60
+M1006 A0 B10 L100 C0 D10 M60 E0 F10 N60
+M1006 A0 B10 L100 C39 D10 M60 E39 F10 N60
+M1006 A0 B10 L100 C0 D10 M60 E0 F10 N60
+M1006 A0 B10 L100 C44 D10 M60 E44 F10 N60
+M1006 A0 B10 L100 C0 D10 M60 E0 F10 N60
+M1006 A0 B10 L100 C39 D10 M60 E39 F10 N60
+M1006 A0 B10 L100 C0 D10 M60 E0 F10 N60
+M1006 A0 B10 L100 C48 D10 M60 E44 F10 N80
+M1006 A0 B10 L100 C0 D10 M60 E0 F10 N80
+M1006 A44 B20 L100 C49 D20 M80 E41 F20 N80
+M1006 A0 B20 L100 C0 D20 M60 E0 F20 N80
+M1006 A0 B20 L100 C37 D20 M30 E37 F20 N60
+M1006 W    ; Wait for sound to complete
+
+;===== STEP 10: DISABLE ALL MOTORS =====
+M400           ; Final wait for completion
+M18 X Y Z      ; Disable X, Y, and Z motors (print complete!)
+
+;===============================================================================
+; END OF MACHINE END G-CODE
+; Print completed successfully!
+;===============================================================================

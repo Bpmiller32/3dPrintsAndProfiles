@@ -1,0 +1,27 @@
+;===============================================================================
+;                           PAUSE G-CODE
+;===============================================================================
+; Bambu Lab A1 - Optimized for PA6-CF Quality Printing
+;
+; This code executes when print is paused (manually or automatically)
+;
+; IMPORTANT BEHAVIOR:
+; ✓ G29.1 Z-offset is PRESERVED during pause (correct!)
+; ✓ Allows proper resume without offset changes
+; ✓ Offset remains active until print ends or new print starts
+; ✓ Start G-code resets offset at beginning of next print
+;
+; This ensures:
+; - Consistent first layer height after resume
+; - No unexpected Z-offset changes mid-print
+; - Reliable pause/resume behavior
+;
+; DO NOT MODIFY unless you need custom pause behavior
+;===============================================================================
+
+M400 U1  ; Pause print and wait for all moves to complete
+
+;===============================================================================
+; END OF PAUSE G-CODE
+; Z-offset preserved - safe to resume printing
+;===============================================================================

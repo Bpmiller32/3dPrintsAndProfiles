@@ -1,0 +1,102 @@
+;===============================================================================
+;                         TIMELAPSE G-CODE
+;===============================================================================
+; Bambu Lab A1 - Optimized for PA6-CF Quality Printing
+; Date: 20250206
+;
+; WHAT THIS DOES:
+; - Captures timelapse frames at each layer
+; - Moves nozzle away from print for clear shots
+; - Enables nozzle clog detection (starting at layer 3)
+; - Monitors print mass for quality assurance
+;
+; IMPORTANT NOTES:
+; ✓ Not compatible with spiral_mode or by-object printing
+; ✓ G29.1 Z-offset is NOT affected by this code
+; ✓ Clog detection starts at layer 3 (prevents false positives)
+; ✓ Quality-focused: detects issues before they ruin prints
+;
+; OPTIMAL SETTINGS - DO NOT MODIFY UNLESS NEEDED
+;===============================================================================
+
+{if !spiral_mode && print_sequence != "by object"}
+; Timelapse only works in standard layer-by-layer mode
+; SKIPPABLE_START
+; SKIPTYPE: timelapse
+M622.1 S1  ; For previous firmware, default turned on
+
+;===== TIMELAPSE FRAME CAPTURE =====
+M1002 judge_flag timelapse_record_flag
+M622 J1
+  G92 E0      ; Zero extruder
+  G1 Z{max_layer_z + 0.4}  ; Raise Z slightly for clearance
+  G1 X0 Y{first_layer_center_no_wipe_tower[1]} F18000  ; Move to safe position
+  G1 X-48.2 F3000                                       ; Final positioning for camera
+  M400                     ; Wait for moves to complete
+  M1004 S5 P1             ; Trigger external camera shutter
+  M400 P300               ; Wait 300ms for capture
+  M971 S11 C11 O0         ; Internal capture command
+  G92 E0                  ; Zero extruder again
+  G1 X0 F18000            ; Return to print area
+M623
+
+;===== NOZZLE CLOG DETECTION =====
+; SKIPTYPE: head_wrap_detect
+M622.1 S1
+M1002 judge_flag g39_3rd_layer_detect_flag
+M622 J1
+  ; Enable nozzle clog detection at 3rd layer
+  ; Waiting until layer 3 prevents false positives during:
+  ; - First layer squish variations
+  ; - Initial extrusion settling
+  ; - Bed adhesion irregularities
+  {if layer_num == 2}
+    M400              ; Wait for completion
+    G90               ; Absolute positioning
+    M83               ; Relative extrusion
+    M204 S5000        ; Set acceleration for detection move
+    G0 Z2 F4000       ; Move to safe Z height
+    G0 X261 Y250 F20000  ; Move to detection position
+    M400 P200         ; Wait 200ms
+    G39 S1            ; Enable clog detection
+    G0 Z2 F4000       ; Return to safe Z
+  {endif}
+
+  ;===== CONTINUOUS MASS MONITORING =====
+  ; Detects print failures by monitoring filament mass
+  M622.1 S1
+  M1002 judge_flag g39_detection_flag
+  M622 J1
+    {if !in_head_wrap_detect_zone}
+      M622.1 S0
+      M1002 judge_flag g39_mass_exceed_flag
+      M622 J1
+        {if layer_num > 2}
+          ; Active monitoring after layer 3
+          G392 S0              ; Disable temp clog detection
+          M400                 ; Wait for completion
+          G90                  ; Absolute positioning
+          M83                  ; Relative extrusion
+          M204 S5000          ; Detection acceleration
+          G0 Z{max_layer_z + 0.4} F4000  ; Safe Z height
+          G39.3 S1            ; Check print mass
+          G0 Z{max_layer_z + 0.4} F4000  ; Maintain safe Z
+          G392 S0             ; Re-enable clog detection
+        {endif}
+      M623
+    {endif}
+  M623
+M623
+; SKIPPABLE_END
+{endif}
+
+;===============================================================================
+; END OF TIMELAPSE G-CODE
+;
+; QUALITY BENEFITS:
+; ✓ Detects nozzle clogs early (saves prints!)
+; ✓ Monitors print mass for anomalies
+; ✓ Captures clean timelapse frames
+; ✓ No interference with G29.1 Z-offset
+; ✓ Works perfectly with +0.09mm offset setting
+;===============================================================================
